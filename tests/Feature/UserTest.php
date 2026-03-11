@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\User;
-use App\Enums\UserRole;
 
 class UserTest extends TestCase
 {
@@ -16,7 +15,7 @@ class UserTest extends TestCase
         $user = User::create([
             'email' => 'admin@email.com',
             'password' => bcrypt('123456'),
-            'role' => UserRole::ADMIN,
+            'role' => 'Admin',
             'name' => 'maycon'
         ]);
 
