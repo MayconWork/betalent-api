@@ -13,4 +13,22 @@ class Transaction extends Model
         'amount',
         'card_last_numbers'
     ];
+
+    public function client()
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    public function gateway()
+    {
+        return $this->belongsTo(Gateway::class);
+    }
+
+    public function products()
+    {
+        return $this->belongsToMany(
+            Product::class,
+            'transaction_produts'
+        )->withPivot('quantity');
+    }
 }
