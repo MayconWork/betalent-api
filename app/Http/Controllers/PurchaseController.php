@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Product;
+use App\Models\Client;
 use App\Services\PaymentService;
 
 class PurchaseController extends Controller
@@ -26,14 +27,19 @@ class PurchaseController extends Controller
             'cvv' => 'required|string'
         ]);
 
+        $client = Client::firstOrCreate([
+            'email' => $data['email']
+        ],[
+            'name' => $data['name']
+        ]);
+
         $product = Product::findOrFail($data['product_id']);
 
         $amount = $product->amount * $data['quantity'];
 
         $result = $this->paymentService->process([
+            'client_id' => $client->id,
             'amount' => $amount,
-            'name' => $data['name'],
-            'email' => $data['email'],
             'cardNumber' => $data['cardNumber'],
             'cvv' => $data['cvv']
         ]);

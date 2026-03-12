@@ -9,6 +9,7 @@ class Transaction extends Model
     protected $fillable = [
         'client_id',
         'gateway_id',
+        'external_id',
         'status',
         'amount',
         'card_last_numbers'
@@ -28,7 +29,7 @@ class Transaction extends Model
     {
         return $this->belongsToMany(
             Product::class,
-            'transaction_produts'
+            'transaction_products'
         )->withPivot('quantity');
     }
 }

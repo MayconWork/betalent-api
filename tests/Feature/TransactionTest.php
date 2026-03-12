@@ -14,12 +14,9 @@ class TransactionTest extends TestCase
 
     public function test_transaction_can_be_created()
     {
-        $client = Client::create([
-            'name' => 'Maycon',
-            'email' => 'maycon@email.com'
-        ]);
+        $client = Client::factory()->create();
 
-        $gateway = Gateway::create([
+        $gateway = Gateway::factory()->create([
             'name' => 'Gateway 1'
         ]);
 
@@ -32,7 +29,9 @@ class TransactionTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('transactions', [
+            'id' => $transaction->id,
             'client_id' => $client->id,
+            'gateway_id' => $gateway->id,
             'amount' => 10000
         ]);
     }
