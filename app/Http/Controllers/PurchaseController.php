@@ -38,6 +38,8 @@ class PurchaseController extends Controller
 
         $result = $this->paymentService->process([
             'client_id' => $client->id,
+            'product_id' => $product->id,
+            'quantity' => $data['quantity'],
             'amount' => $amount,
             'name' => $data['name'],
             'email' => $data['email'],

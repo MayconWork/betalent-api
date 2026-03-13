@@ -19,6 +19,11 @@ class PaymentService
             $gateway2
         ];
     }
+    
+    public function index()
+    {
+        return Transaction::with(['client','products','gateway'])->get();
+    }
 
     public function process(array $paymentData): array
     {
@@ -28,18 +33,21 @@ class PaymentService
 
                 $response = $gateway->processPayment($paymentData);
 
-                //dd($response); //temporário para verificar o retorno do gateway
-
                 if (!empty($response['transaction_id']) || !empty($response['id'])) {
 
-                Transaction::create([
-                    'client_id' => $paymentData['client_id'],
-                    'gateway_id' => $gateway->getId(),
-                    'external_id' => $response['transaction_id'] ?? $response['id'] ?? null,
-                    'status' => 'approved',
-                    'amount' => $paymentData['amount'],
-                    'card_last_numbers' => substr($paymentData['cardNumber'], -4)
-                ]);
+                    $transaction = Transaction::create([
+                        'client_id' => $paymentData['client_id'],
+                        'gateway_id' => $gateway->getId(),
+                        'external_id' => $response['transaction_id'] ?? $response['id'] ?? null,
+                        'status' => 'approved',
+                        'amount' => $paymentData['amount'],
+                        'card_last_numbers' => substr($paymentData['cardNumber'], -4)
+                    ]);
+
+                    $transaction->products()->attach(
+                        $paymentData['product_id'],
+                        ['quantity' => $paymentData['quantity']]
+                    );
 
                     return [
                         'success' => true,
@@ -48,7 +56,8 @@ class PaymentService
                 }
 
             } catch (\Throwable $e) {
-                continue;
+                \Log::error($e);
+                throw $e;
             }
         }
 
