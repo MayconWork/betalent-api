@@ -10,4 +10,11 @@ class ClientController extends Controller
     {
         return Client::with('transactions')->get();
     }
+    
+    public function show($id)
+    {
+        return Client::with([
+            'transactions.products'
+        ])->findOrFail($id);
+    }
 }

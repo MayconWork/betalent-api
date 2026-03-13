@@ -15,3 +15,5 @@ Route::get('/transactions', [TransactionController::class, 'index']);
 Route::get('/transactions/{id}', [TransactionController::class, 'show']);
 
 Route::get('/clients', [ClientController::class, 'index']);
+
+Route::get('/clients/{id}', [ClientController::class, 'show']);
