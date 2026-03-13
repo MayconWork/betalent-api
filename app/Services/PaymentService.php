@@ -56,7 +56,6 @@ class PaymentService
                 }
 
             } catch (\Throwable $e) {
-                \Log::error($e);
                 throw $e;
             }
         }
