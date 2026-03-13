@@ -7,7 +7,3 @@ use App\Http\Controllers\PurchaseController;
 Route::get('/', function () {
     return view('welcome');
 });
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/purchase', [PurchaseController::class, 'purchase']);
-});

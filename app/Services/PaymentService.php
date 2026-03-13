@@ -28,18 +28,23 @@ class PaymentService
 
                 $response = $gateway->processPayment($paymentData);
 
-                if (($response['success'] ?? false) === true) {
+                //dd($response); //temporário para verificar o retorno do gateway
+
+                if (!empty($response['transaction_id']) || !empty($response['id'])) {
 
                 Transaction::create([
                     'client_id' => $paymentData['client_id'],
-                    'gateway_id' => $paymentData['gateway_id'] ?? null,
-                    'external_id' => $response['transaction_id'] ?? null,
+                    'gateway_id' => $gateway->getId(),
+                    'external_id' => $response['transaction_id'] ?? $response['id'] ?? null,
                     'status' => 'approved',
                     'amount' => $paymentData['amount'],
                     'card_last_numbers' => substr($paymentData['cardNumber'], -4)
                 ]);
 
-                    return $response;
+                    return [
+                        'success' => true,
+                        'transaction_id' => $response['transaction_id'] ?? $response['id']
+                    ];
                 }
 
             } catch (\Throwable $e) {
