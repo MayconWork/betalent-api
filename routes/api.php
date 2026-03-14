@@ -1,23 +1,47 @@
 <?php
-
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\GatewayController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\PurchaseController;
 use Illuminate\Support\Facades\Route;
 
-// Login
+// Rotas públicas
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/transactions', [PurchaseController::class, 'purchase']); // compra pública
 
-// Products
-Route::apiResource('products', ProductController::class);
+// Rotas privadas
+Route::middleware('auth:sanctum')->group(function () {
 
-// Clients
-Route::get('clients', [ClientController::class, 'index']);
-Route::get('clients/{id}', [ClientController::class, 'show']);
+    // Produtos — ADMIN/MANAGER/FINANCE
+    Route::get('products', [ProductController::class, 'index']);
+    Route::get('products/{id}', [ProductController::class, 'show']);
+    Route::post('products', [ProductController::class, 'store'])
+        ->middleware('role:ADMIN,MANAGER');
+    Route::put('products/{id}', [ProductController::class, 'update'])
+        ->middleware('role:ADMIN,MANAGER');
+    Route::delete('products/{id}', [ProductController::class, 'destroy'])
+        ->middleware('role:ADMIN');
 
-// Transactions
-Route::get('transactions', [TransactionController::class, 'index']);
-Route::get('transactions/{id}', [TransactionController::class, 'show']);
-Route::post('transactions', [TransactionController::class, 'store']);
-Route::post('transactions/{id}/refund', [TransactionController::class, 'refund']);
+    // Clientes
+    Route::get('clients', [ClientController::class, 'index']);
+    Route::get('clients/{id}', [ClientController::class, 'show']);
+
+    // Transações
+    Route::get('transactions', [TransactionController::class, 'index']);
+    Route::get('transactions/{id}', [TransactionController::class, 'show']);
+    Route::post('transactions/{id}/refund', [TransactionController::class, 'refund'])
+        ->middleware('role:ADMIN,FINANCE');
+
+    // Gateways
+    Route::patch('gateways/{id}/toggle', [GatewayController::class, 'toggle'])
+        ->middleware('role:ADMIN');
+    Route::patch('gateways/{id}/priority', [GatewayController::class, 'updatePriority'])
+        ->middleware('role:ADMIN');
+
+    // Usuários
+    Route::apiResource('users', UserController::class)
+        ->middleware('role:ADMIN,MANAGER');
+});

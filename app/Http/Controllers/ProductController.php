@@ -21,10 +21,10 @@ class ProductController extends Controller
             abort(403);
         }
 
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0'
-        ]);
+    $data = $request->validate([
+        'name'   => 'required|string|max:255',
+        'amount' => 'required|integer|min:0',
+    ]);
 
         return Product::create($data);
     }

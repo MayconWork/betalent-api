@@ -5,6 +5,7 @@ use App\Models\Client;
 use App\Models\Transaction;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class TransactionController extends Controller
 {
@@ -55,6 +56,25 @@ class TransactionController extends Controller
 
     public function refund($id)
     {
-        // implemente conforme necessário
+        $transaction = Transaction::with('gateway')->findOrFail($id);
+
+        if ($transaction->status === 'refunded') {
+            return response()->json(['message' => 'Transaction already refunded'], 422);
+        }
+
+        // Chama o gateway correto baseado no gateway_id da transação
+        $gatewayId = $transaction->gateway_id;
+        $gateway = $gatewayId === 1
+            ? app(\App\Gateways\Gateway1Service::class)
+            : app(\App\Gateways\Gateway2Service::class);
+
+        try {
+            $gateway->refund($transaction->external_id);
+            $transaction->update(['status' => 'refunded']);
+            return response()->json(['success' => true]);
+        } catch (\Throwable $e) {
+            Log::error('Refund error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Refund failed'], 500);
+        }
     }
 }
