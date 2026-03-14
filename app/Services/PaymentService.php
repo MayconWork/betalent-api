@@ -1,44 +1,42 @@
 <?php
-
 namespace App\Services;
 
+use App\Models\Gateway;
+use App\Models\Transaction;
 use App\Gateways\Gateway1Service;
 use App\Gateways\Gateway2Service;
-use App\Models\Transaction;
 
 class PaymentService
 {
-    protected array $gateways;
-
-    public function __construct(
-        Gateway1Service $gateway1,
-        Gateway2Service $gateway2
-    ) {
-        $this->gateways = [
-            $gateway1,
-            $gateway2
-        ];
-    }
-
-    public function index()
-    {
-        return Transaction::with(['client', 'products', 'gateway'])->get();
-    }
+    private array $gatewayMap = [
+        1 => Gateway1Service::class,
+        2 => Gateway2Service::class,
+    ];
 
     public function process(array $paymentData): array
     {
-        foreach ($this->gateways as $gateway) {
+        $gateways = Gateway::where('is_active', true)
+            ->orderBy('priority')
+            ->get();
+
+        foreach ($gateways as $gateway) {
+            if (!isset($this->gatewayMap[$gateway->id])) {
+                continue;
+            }
+
+            $service = app($this->gatewayMap[$gateway->id]);
+
             try {
-                $response = $gateway->processPayment($paymentData);
+                $response = $service->processPayment($paymentData);
 
                 if (!empty($response['transaction_id']) || !empty($response['id'])) {
                     $transaction = Transaction::create([
-                        'client_id'        => $paymentData['client_id'],
-                        'gateway_id'       => $gateway->getId(),
-                        'external_id'      => $response['transaction_id'] ?? $response['id'] ?? null,
-                        'status'           => 'approved',
-                        'amount'           => $paymentData['amount'],
-                        'card_last_numbers'=> substr($paymentData['cardNumber'], -4)
+                        'client_id'         => $paymentData['client_id'],
+                        'gateway_id'        => $gateway->id,
+                        'external_id'       => $response['transaction_id'] ?? $response['id'] ?? null,
+                        'status'            => 'approved',
+                        'amount'            => $paymentData['amount'],
+                        'card_last_numbers' => substr($paymentData['cardNumber'], -4)
                     ]);
 
                     foreach ($paymentData['products'] as $item) {
@@ -54,6 +52,7 @@ class PaymentService
                     ];
                 }
             } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Gateway ' . $gateway->name . ' failed: ' . $e->getMessage());
                 continue;
             }
         }

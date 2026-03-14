@@ -18,13 +18,13 @@ class PurchaseController extends Controller
     public function purchase(Request $request)
     {
         $data = $request->validate([
-            'products' => 'required|array',
-            'products.*.product_id' => 'required|exists:products,id',
-            'products.*.quantity' => 'required|integer|min:1',
-            'name' => 'required|string',
-            'email' => 'required|email',
-            'cardNumber' => 'required|string',
-            'cvv' => 'required|string'
+            'products'                => 'required|array|min:1',
+            'products.*.product_id'   => 'required|integer|exists:products,id',
+            'products.*.quantity'     => 'required|integer|min:1',
+            'name'                    => 'required|string|max:255',
+            'email'                   => 'required|email|max:255',
+            'cardNumber'              => 'required|string|size:16',
+            'cvv'                     => 'required|string|min:3|max:4',
         ]);
 
         // Cria ou busca o cliente
@@ -50,6 +50,6 @@ class PurchaseController extends Controller
             'cvv' => $data['cvv']
         ]);
 
-        return response()->json($result);
+        return response()->json($result, $result['success'] ? 200 : 422);
     }
 }

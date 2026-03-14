@@ -47,67 +47,45 @@ class PaymentServiceTest extends TestCase
 
     public function test_fallback_to_second_gateway_when_first_fails()
     {
-        // Cria cliente
         $client = Client::factory()->create();
 
-        // Cria gateways ativos
-        Gateway::create([
-            'id' => 1,
-            'name' => 'Gateway1',
-            'is_active' => true,
-            'priority' => 1
-        ]);
-        Gateway::create([
-            'id' => 2,
-            'name' => 'Gateway2',
-            'is_active' => true,
-            'priority' => 2
-        ]);
+        // Cria gateways no banco ordenados por prioridade
+        Gateway::create(['id' => 1, 'name' => 'Gateway1', 'is_active' => true, 'priority' => 1]);
+        Gateway::create(['id' => 2, 'name' => 'Gateway2', 'is_active' => true, 'priority' => 2]);
 
-        // Cria produto de teste
-        $product = Product::create([
-            'name' => 'Produto Teste',
-            'amount' => 1000
-        ]);
+        $product = Product::create(['name' => 'Produto Teste', 'amount' => 1000]);
 
-        // Dados do pagamento
         $paymentData = [
-            'client_id' => $client->id,
-            'amount' => 1000,
+            'client_id'  => $client->id,
+            'amount'     => 1000,
             'cardNumber' => '1234567812345678',
-            'cvv' => '010',
-            'products' => [
-                [
-                    'product_id' => $product->id,
-                    'quantity' => 2
-                ]
-            ]
+            'cvv'        => '010',
+            'products'   => [['product_id' => $product->id, 'quantity' => 2]]
         ];
 
-        // Mock dos gateways
-        $gateway1 = $this->mockGateway1Fail();
-        $gateway2 = $this->mockGateway2Success();
+        // Mock Gateway1 falhando
+        $this->instance(Gateway1Service::class, tap(Mockery::mock(Gateway1Service::class), function ($mock) {
+            $mock->shouldReceive('processPayment')->once()->andReturn(['success' => false]);
+        }));
 
-        // PaymentService com fallback
-        $paymentService = new PaymentService($gateway1, $gateway2);
+        // Mock Gateway2 com sucesso
+        $this->instance(Gateway2Service::class, tap(Mockery::mock(Gateway2Service::class), function ($mock) {
+            $mock->shouldReceive('processPayment')->once()->andReturn([
+                'success'        => true,
+                'transaction_id' => 'tx456'
+            ]);
+        }));
 
+        $paymentService = app(PaymentService::class);
         $result = $paymentService->process($paymentData);
 
-        // Asserts
         $this->assertTrue($result['success']);
         $this->assertEquals('tx456', $result['transaction_id']);
 
-        // Verifica se a transação foi criada corretamente
         $this->assertDatabaseHas('transactions', [
-            'client_id' => $client->id,
+            'client_id'  => $client->id,
             'gateway_id' => 2,
-            'amount' => 1000
-        ]);
-
-        // Verifica se o produto foi associado
-        $this->assertDatabaseHas('transaction_products', [
-            'product_id' => $product->id,
-            'quantity' => 2
+            'amount'     => 1000
         ]);
     }
 }

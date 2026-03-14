@@ -17,29 +17,22 @@ class ProductController extends Controller
 
     public function store(Request $request)
     {
-        if (Auth::user()->role !== UserRole::ADMIN) {
-            abort(403);
-        }
 
     $data = $request->validate([
         'name'   => 'required|string|max:255',
         'amount' => 'required|integer|min:0',
     ]);
 
-        return Product::create($data);
+        return response()->json(Product::create($data), 201);
     }
 
     public function show($id)
     {
-        return Product::findOrFail($id);
+        return response()->json(Product::findOrFail($id));
     }
 
     public function update(Request $request, $id)
     {
-        if (!in_array(Auth::user()->role, [UserRole::ADMIN, UserRole::MANAGER])) {
-            abort(403, 'Unauthorized');
-        }
-
         $product = Product::findOrFail($id);
         $product->update($request->all());
 
@@ -48,9 +41,6 @@ class ProductController extends Controller
 
     public function destroy($id)
     {
-        if (Auth::user()->role !== UserRole::ADMIN) {
-            abort(403, 'Only admins can delete products');
-        }
 
         Product::destroy($id);
 
