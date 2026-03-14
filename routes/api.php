@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 // Rotas públicas
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/transactions', [PurchaseController::class, 'purchase']); // compra pública
+Route::post('/transactions', [PurchaseController::class, 'purchase']);
 
 // Rotas privadas
 Route::middleware('auth:sanctum')->group(function () {
@@ -19,9 +19,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('products', [ProductController::class, 'index']);
     Route::get('products/{id}', [ProductController::class, 'show']);
     Route::post('products', [ProductController::class, 'store'])
-        ->middleware('role:ADMIN,MANAGER');
+        ->middleware('role:ADMIN,MANAGER,FINANCE');
     Route::put('products/{id}', [ProductController::class, 'update'])
-        ->middleware('role:ADMIN,MANAGER');
+        ->middleware('role:ADMIN,MANAGER,FINANCE');
     Route::delete('products/{id}', [ProductController::class, 'destroy'])
         ->middleware('role:ADMIN');
 

@@ -87,8 +87,6 @@ services:
     ports:
       - "3001:3001"
       - "3002:3002"
-    environment:
-      REMOVE_AUTH: 'true'
     networks:
       - backend
     deploy:
