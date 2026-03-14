@@ -13,50 +13,48 @@ class PaymentService
     public function __construct(
         Gateway1Service $gateway1,
         Gateway2Service $gateway2
-    ){
+    ) {
         $this->gateways = [
             $gateway1,
             $gateway2
         ];
     }
-    
+
     public function index()
     {
-        return Transaction::with(['client','products','gateway'])->get();
+        return Transaction::with(['client', 'products', 'gateway'])->get();
     }
 
     public function process(array $paymentData): array
     {
         foreach ($this->gateways as $gateway) {
-
             try {
-
                 $response = $gateway->processPayment($paymentData);
 
                 if (!empty($response['transaction_id']) || !empty($response['id'])) {
-
                     $transaction = Transaction::create([
-                        'client_id' => $paymentData['client_id'],
-                        'gateway_id' => $gateway->getId(),
-                        'external_id' => $response['transaction_id'] ?? $response['id'] ?? null,
-                        'status' => 'approved',
-                        'amount' => $paymentData['amount'],
-                        'card_last_numbers' => substr($paymentData['cardNumber'], -4)
+                        'client_id'        => $paymentData['client_id'],
+                        'gateway_id'       => $gateway->getId(),
+                        'external_id'      => $response['transaction_id'] ?? $response['id'] ?? null,
+                        'status'           => 'approved',
+                        'amount'           => $paymentData['amount'],
+                        'card_last_numbers'=> substr($paymentData['cardNumber'], -4)
                     ]);
 
-                    $transaction->products()->attach(
-                        $paymentData['product_id'],
-                        ['quantity' => $paymentData['quantity']]
-                    );
+                    foreach ($paymentData['products'] as $item) {
+                        $transaction->products()->attach(
+                            $item['product_id'],
+                            ['quantity' => $item['quantity']]
+                        );
+                    }
 
                     return [
-                        'success' => true,
+                        'success'        => true,
                         'transaction_id' => $response['transaction_id'] ?? $response['id']
                     ];
                 }
-
             } catch (\Throwable $e) {
-                throw $e;
+                continue;
             }
         }
 

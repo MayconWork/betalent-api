@@ -21,7 +21,6 @@ class DatabaseMigrationsTest extends TestCase
         $this->assertTrue(Schema::hasTable('transactions'), 'Tabela transactions inexistente');
         $this->assertTrue(Schema::hasTable('transaction_products'), 'Tabela transaction_products inexistente');
 
-        // colunas mínimas (exemplos)
         $this->assertTrue(Schema::hasColumn('users', 'email'), 'users.email ausente');
         $this->assertTrue(Schema::hasColumn('users', 'password'), 'users.password ausente');
         $this->assertTrue(Schema::hasColumn('users', 'role'), 'users.role ausente');
